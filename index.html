@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local Course Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body class="dark-mode">
+    <div class="app-container">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h1>Course Player</h1>
+          <div class="header-controls">
+            <button id="select-folder" class="btn" type="button">
+              <i class="fas fa-folder-open"></i> Select Course
+            </button>
+          </div>
+        </div>
+        <div class="course-progress">
+          <div class="progress-bar" id="global-progress-bar">
+            <div class="progress-fill" id="global-progress-fill"></div>
+          </div>
+          <span class="progress-text" id="global-progress-text"
+            >0% Complete</span
+          >
+        </div>
+        <nav class="course-navigation"></nav>
+      </aside>
+      <main class="main-content">
+        <div class="main-header">
+          <div class="title-section">
+            <h2 id="current-section-heading">Course Navigation</h2>
+            <h3 id="video-title">Select a video to start</h3>
+          </div>
+          <button id="theme-toggle" class="theme-toggle" type="button">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+
+        <div id="welcome-message" class="welcome-container">
+          <h2>Welcome to the Local Course Player!</h2>
+          <p>
+            This tool lets you watch video courses that are stored on your own
+            computer. Your files are <strong>never</strong> uploaded to any
+            server.
+          </p>
+          <p>
+            To begin, click the <strong>"Select Course"</strong> button in the
+            sidebar and choose the root folder of your course.
+          </p>
+          <p class="compatibility-note">
+            <i class="fas fa-exclamation-triangle"></i>
+            This player requires a modern browser like
+            <strong>Google Chrome</strong> or
+            <strong>Microsoft Edge</strong> that supports the File System Access
+            API.
+          </p>
+        </div>
+
+        <div class="video-container">
+          <video id="video-player" controls>
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div class="video-nav-controls">
+          <button id="prev-video" class="btn" type="button">
+            <i class="fas fa-step-backward"></i> Prev
+          </button>
+          <button id="next-video" class="btn" type="button">
+            Next <i class="fas fa-step-forward"></i>
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
