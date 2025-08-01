@@ -1,4 +1,3 @@
-// Course structure and state management
 const courseState = {
     currentVideo: null,
     progress: {},
@@ -11,27 +10,21 @@ const courseState = {
     },
     folderHandle: null,
     coursePath: null,
-    courseName: null,
-    watchStats: {
-        totalWatchTime: 0,
-        dailyWatchTime: {},
-        sectionWatchTime: {}
-    }
+    courseName: null
 };
 
-// IndexedDB database name and store names
 const DB_NAME = 'coursePlayerDB';
 const STORE_NAME = 'folderHandle';
 const COURSE_PATH_STORE = 'coursePath';
 
-// DOM Elements
 let videoPlayer;
 let playPauseBtn;
 let skipBackwardBtn;
 let skipForwardBtn;
 let volumeBtn;
 let volumeSlider;
-let playbackSpeedSelect;
+let speedBtn;
+let speedMenu;
 let fullscreenBtn;
 let themeToggle;
 let selectFolderBtn;
@@ -44,16 +37,17 @@ let globalProgressText;
 let coursePathText;
 let clearCourseBtn;
 let resetDbBtn;
+let videoSeekbar;
+let seekbarProgress;
+let seekbarBuffer;
+let timeDisplay;
 
-// Add prev/next button logic and autoplay-next feature
 let autoPlayTimeout = null;
 let autoPlayOverlay = null;
 let autoPlaySeconds = 5;
 
-// Add prev/next video navigation and playback speed memory
 let lastPlaybackSpeed = 1;
 
-// Initialize DOM elements
 function initializeDOMElements() {
     videoPlayer = document.getElementById('video-player');
     playPauseBtn = document.getElementById('play-pause');
@@ -61,7 +55,8 @@ function initializeDOMElements() {
     skipForwardBtn = document.getElementById('skip-forward');
     volumeBtn = document.getElementById('volume-btn');
     volumeSlider = document.getElementById('volume-slider');
-    playbackSpeedSelect = document.getElementById('playback-speed');
+    speedBtn = document.getElementById('speed-btn');
+    speedMenu = document.getElementById('speed-menu');
     fullscreenBtn = document.getElementById('fullscreen');
     themeToggle = document.getElementById('theme-toggle');
     selectFolderBtn = document.getElementById('select-folder');
@@ -75,7 +70,11 @@ function initializeDOMElements() {
     clearCourseBtn = document.getElementById('clear-course');
     resetDbBtn = document.getElementById('reset-db');
 
-    // Initialize prev/next buttons
+    videoSeekbar = document.getElementById('video-seekbar');
+    seekbarProgress = document.getElementById('seekbar-progress');
+    seekbarBuffer = document.getElementById('seekbar-buffer');
+    timeDisplay = document.getElementById('time-display');
+
     const prevBtn = document.getElementById('prev-video');
     const nextBtn = document.getElementById('next-video');
 
@@ -87,7 +86,6 @@ function initializeDOMElements() {
         nextBtn.onclick = playNextVideo;
     }
 
-    // Verify elements were found
     const elements = {
         videoPlayer,
         playPauseBtn,
@@ -95,7 +93,8 @@ function initializeDOMElements() {
         skipForwardBtn,
         volumeBtn,
         volumeSlider,
-        playbackSpeedSelect,
+        speedBtn,
+        speedMenu,
         fullscreenBtn,
         themeToggle,
         selectFolderBtn,
@@ -119,7 +118,6 @@ function initializeDOMElements() {
     }
 }
 
-// Initialize IndexedDB
 async function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 2);
@@ -139,17 +137,14 @@ async function initDB() {
     });
 }
 
-// Store folder handle in IndexedDB
 async function storeFolderHandle(handle) {
     try {
         const db = await initDB();
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
 
-        // Store the handle with its key
         await store.put(handle, 'folderHandle');
 
-        // Wait for the transaction to complete
         await new Promise((resolve, reject) => {
             transaction.oncomplete = resolve;
             transaction.onerror = reject;
@@ -158,21 +153,18 @@ async function storeFolderHandle(handle) {
         console.log('Folder handle stored successfully');
     } catch (error) {
         console.error('Error storing folder handle:', error);
-        throw error; // Re-throw to handle in the calling function
+        throw error;
     }
 }
 
-// Restore folder handle from IndexedDB
 async function restoreFolderHandle() {
     try {
         const db = await initDB();
         const transaction = db.transaction(STORE_NAME, 'readonly');
         const store = transaction.objectStore(STORE_NAME);
 
-        // Get the handle
         const handle = await store.get('folderHandle');
 
-        // Wait for the transaction to complete
         await new Promise((resolve, reject) => {
             transaction.oncomplete = resolve;
             transaction.onerror = reject;
@@ -185,7 +177,6 @@ async function restoreFolderHandle() {
     }
 }
 
-// Store course path information in IndexedDB
 async function storeCoursePath(path, name) {
     try {
         const db = await initDB();
@@ -207,12 +198,10 @@ async function storeCoursePath(path, name) {
     }
 }
 
-// Restore course path information from IndexedDB
 async function restoreCoursePath() {
     try {
         const db = await initDB();
 
-        // Check if the store exists
         if (!db.objectStoreNames.contains(COURSE_PATH_STORE)) {
             console.log('Course path store does not exist, skipping restoration');
             return null;
@@ -235,12 +224,11 @@ async function restoreCoursePath() {
     }
 }
 
-// Update course path display
 function updateCoursePathDisplay(path, name) {
     if (coursePathText) {
         if (path && name) {
             coursePathText.textContent = name;
-            coursePathText.title = path; // Show full path on hover
+            coursePathText.title = path;
             if (clearCourseBtn) {
                 clearCourseBtn.style.display = 'flex';
             }
@@ -253,7 +241,6 @@ function updateCoursePathDisplay(path, name) {
             if (clearCourseBtn) {
                 clearCourseBtn.style.display = 'none';
             }
-            // Show reset button if we had a course before but lost it
             if (resetDbBtn && (courseState.coursePath || courseState.courseName)) {
                 resetDbBtn.style.display = 'flex';
             }
@@ -261,10 +248,8 @@ function updateCoursePathDisplay(path, name) {
     }
 }
 
-// Clear course and reset display
 async function clearCourse() {
     try {
-        // Clear from IndexedDB
         const db = await initDB();
         const transaction = db.transaction([STORE_NAME, COURSE_PATH_STORE], 'readwrite');
 
@@ -279,20 +264,16 @@ async function clearCourse() {
             transaction.onerror = reject;
         });
 
-        // Reset state
         courseState.folderHandle = null;
         courseState.coursePath = null;
         courseState.courseName = null;
 
-        // Clear navigation
         if (courseNavigation) {
             courseNavigation.innerHTML = '';
         }
 
-        // Update display
         updateCoursePathDisplay(null, null);
 
-        // Update video title
         if (videoTitle) {
             videoTitle.textContent = 'Select a video to start';
         }
@@ -303,7 +284,6 @@ async function clearCourse() {
     }
 }
 
-// Reset database (for development/debugging)
 async function resetDatabase() {
     try {
         const db = await initDB();
@@ -316,20 +296,17 @@ async function resetDatabase() {
         });
 
         console.log('Database reset successfully');
-        location.reload(); // Reload the page to reinitialize
+        location.reload();
     } catch (error) {
         console.error('Error resetting database:', error);
     }
 }
 
-// Initialize the application
 async function init() {
     console.log('Initializing application...');
 
-    // Initialize DOM elements first
     initializeDOMElements();
 
-    // Check if running in a secure context
     if (!window.isSecureContext) {
         console.error('Not running in a secure context');
         const errorMessage = 'This application requires a secure context (HTTPS or localhost).\n\n' +
@@ -342,7 +319,6 @@ async function init() {
         return;
     }
 
-    // Check if File System Access API is supported
     if (!window.showDirectoryPicker) {
         console.error('File System Access API not supported');
         alert('Your browser does not support the required features. Please use Chrome, Edge, or another Chromium-based browser.');
@@ -352,23 +328,19 @@ async function init() {
     await loadState();
     setupEventListeners();
     applySettings();
-    displayWatchStats();
 
-    // Try to restore folder handle from IndexedDB
     try {
         const handle = await restoreFolderHandle();
         console.log('Folder handle restored:', handle ? 'Yes' : 'No');
 
         if (handle) {
             try {
-                // Verify if we still have permission
                 const permission = await handle.requestPermission({ mode: 'read' });
                 console.log('Permission status:', permission);
 
                 if (permission === 'granted') {
                     courseState.folderHandle = handle;
 
-                    // Update course path display if not already set
                     if (!courseState.coursePath || !courseState.courseName) {
                         courseState.coursePath = handle.name;
                         courseState.courseName = handle.name;
@@ -376,11 +348,9 @@ async function init() {
                         console.log('Course path set from handle:', handle.name);
                     }
 
-                    // Build navigation
                     console.log('Building course navigation...');
                     await buildCourseNavigation();
 
-                    // Update button state
                     if (selectFolderBtn) {
                         selectFolderBtn.innerHTML = '<i class="fas fa-check"></i> Course Loaded';
                         setTimeout(() => {
@@ -404,7 +374,6 @@ async function init() {
             console.log('No folder handle found in database');
         }
 
-        // Final check: if we have a folder handle but no course path display, update it
         if (courseState.folderHandle && (!courseState.coursePath || !courseState.courseName)) {
             courseState.coursePath = courseState.folderHandle.name;
             courseState.courseName = courseState.folderHandle.name;
@@ -417,7 +386,6 @@ async function init() {
     }
 }
 
-// Load saved state from localStorage
 async function loadState() {
     const savedState = localStorage.getItem('courseState');
     if (savedState) {
@@ -426,7 +394,6 @@ async function loadState() {
         courseState.settings = parsed.settings || courseState.settings;
     }
 
-    // Restore course path information
     try {
         const courseInfo = await restoreCoursePath();
         if (courseInfo) {
@@ -440,7 +407,6 @@ async function loadState() {
     }
 }
 
-// Save state to localStorage
 function saveState() {
     localStorage.setItem('courseState', JSON.stringify({
         progress: courseState.progress,
@@ -448,11 +414,10 @@ function saveState() {
     }));
 }
 
-// Setup event listeners
 function setupEventListeners() {
     console.log('Setting up event listeners...');
 
-    // Theme toggle
+
     if (themeToggle) {
         console.log('Setting up theme toggle...');
         themeToggle.addEventListener('click', () => {
@@ -461,7 +426,6 @@ function setupEventListeners() {
         });
     }
 
-    // Select folder
     if (selectFolderBtn) {
         console.log('Setting up folder selection...');
         selectFolderBtn.addEventListener('click', () => {
@@ -470,7 +434,6 @@ function setupEventListeners() {
         });
     }
 
-    // Clear course
     if (clearCourseBtn) {
         console.log('Setting up clear course...');
         clearCourseBtn.addEventListener('click', () => {
@@ -479,7 +442,6 @@ function setupEventListeners() {
         });
     }
 
-    // Reset database
     if (resetDbBtn) {
         console.log('Setting up reset database...');
         resetDbBtn.addEventListener('click', () => {
@@ -490,34 +452,24 @@ function setupEventListeners() {
         });
     }
 
-    // Video player events
     if (videoPlayer) {
         videoPlayer.addEventListener('timeupdate', () => {
             updateProgress();
-            updateWatchStats();
+            updateSeekbarProgress();
+            updateTimeDisplay();
         });
         videoPlayer.addEventListener('ended', handleVideoEnd);
         videoPlayer.addEventListener('loadedmetadata', updateVideoInfo);
+        videoPlayer.addEventListener('progress', updateBufferDisplay);
         videoPlayer.addEventListener('ratechange', () => {
             lastPlaybackSpeed = videoPlayer.playbackRate;
             courseState.settings.playbackSpeed = lastPlaybackSpeed;
             saveState();
         });
 
-        // Add mini player support
-        const miniPlayerBtn = document.createElement('button');
-        miniPlayerBtn.id = 'mini-player-btn';
-        miniPlayerBtn.className = 'control-btn';
-        miniPlayerBtn.innerHTML = '<i class="fas fa-compress"></i>';
-        miniPlayerBtn.title = 'Mini Player';
-        miniPlayerBtn.onclick = toggleMiniPlayer;
-        document.querySelector('.video-controls').appendChild(miniPlayerBtn);
-
-        // Add double-click to fullscreen
         videoPlayer.addEventListener('dblclick', toggleFullscreen);
 
-        // Add click handler only for the video seekbar
-        const videoSeekbar = document.querySelector('.video-seekbar');
+        const videoSeekbar = document.getElementById('video-seekbar');
         if (videoSeekbar) {
             videoSeekbar.addEventListener('click', (e) => {
                 if (!courseState.currentVideo) return;
@@ -528,29 +480,56 @@ function setupEventListeners() {
         }
     }
 
-    // Control buttons
     if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
     if (skipBackwardBtn) skipBackwardBtn.addEventListener('click', () => skipVideo(-10));
     if (skipForwardBtn) skipForwardBtn.addEventListener('click', () => skipVideo(10));
     if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
     if (volumeSlider) volumeSlider.addEventListener('input', handleVolumeChange);
-    if (playbackSpeedSelect) playbackSpeedSelect.addEventListener('change', handlePlaybackSpeedChange);
+    if (speedBtn) speedBtn.addEventListener('click', toggleSpeedMenu);
     if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-    // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.playback-speed-control') && speedMenu) {
+            speedMenu.classList.remove('show');
+        }
+
+        if (e.target.classList.contains('speed-option')) {
+            const speed = parseFloat(e.target.dataset.speed);
+            setPlaybackSpeed(speed);
+        }
+    });
+
+    const customSpeedInput = document.getElementById('custom-speed');
+    const applyCustomSpeedBtn = document.getElementById('apply-custom-speed');
+
+    if (customSpeedInput && applyCustomSpeedBtn) {
+        applyCustomSpeedBtn.addEventListener('click', () => {
+            const customSpeed = parseFloat(customSpeedInput.value);
+            if (customSpeed >= 0.1 && customSpeed <= 4) {
+                setPlaybackSpeed(customSpeed);
+                customSpeedInput.value = '';
+            } else {
+                alert('Please enter a speed between 0.1x and 4.0x');
+            }
+        });
+
+        customSpeedInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyCustomSpeedBtn.click();
+            }
+        });
+    }
 }
 
-// Select course folder
 async function selectCourseFolder() {
     console.log('Selecting course folder...');
     try {
-        // Check if the API is supported
         if (!window.showDirectoryPicker) {
             throw new Error('Your browser does not support folder selection. Please use Chrome, Edge, or another Chromium-based browser.');
         }
 
-        // Show loading state
         if (selectFolderBtn) {
             selectFolderBtn.disabled = true;
             selectFolderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
@@ -559,10 +538,8 @@ async function selectCourseFolder() {
         const handle = await window.showDirectoryPicker();
         courseState.folderHandle = handle;
 
-        // Store the handle in IndexedDB
         await storeFolderHandle(handle);
 
-        // Store course path information
         const coursePath = handle.name;
         const courseName = handle.name;
         courseState.coursePath = coursePath;
@@ -570,15 +547,12 @@ async function selectCourseFolder() {
         await storeCoursePath(coursePath, courseName);
         updateCoursePathDisplay(coursePath, courseName);
 
-        // Update button state
         if (selectFolderBtn) {
             selectFolderBtn.innerHTML = '<i class="fas fa-check"></i> Course Loaded';
         }
 
-        // Build navigation
         await buildCourseNavigation();
 
-        // Reset button after 2 seconds
         setTimeout(() => {
             if (selectFolderBtn) {
                 selectFolderBtn.disabled = false;
@@ -588,16 +562,13 @@ async function selectCourseFolder() {
     } catch (error) {
         console.error('Error selecting folder:', error);
 
-        // Show error state
         if (selectFolderBtn) {
             selectFolderBtn.disabled = false;
             selectFolderBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error';
         }
 
-        // Show error message
         alert(error.message || 'Error selecting folder. Please try again.');
 
-        // Reset button after 2 seconds
         setTimeout(() => {
             if (selectFolderBtn) {
                 selectFolderBtn.innerHTML = '<i class="fas fa-folder-open"></i> Select Course';
@@ -606,17 +577,14 @@ async function selectCourseFolder() {
     }
 }
 
-// Build course navigation from folder structure
 async function buildCourseNavigation() {
     document.getElementById('welcome-message')?.classList.add('welcome-hidden');
 
     if (!courseState.folderHandle) return;
 
     try {
-        // Clear existing navigation
         courseNavigation.innerHTML = '';
 
-        // Get all entries in the folder
         const sections = [];
         for await (const [name, handle] of courseState.folderHandle.entries()) {
             if (handle.kind === 'directory') {
@@ -625,7 +593,6 @@ async function buildCourseNavigation() {
                     videos: []
                 };
 
-                // Get all video files in the section
                 for await (const [fileName, fileHandle] of handle.entries()) {
                     if (fileHandle.kind === 'file' && fileName.endsWith('.mp4')) {
                         section.videos.push({
@@ -636,16 +603,13 @@ async function buildCourseNavigation() {
                     }
                 }
 
-                // Sort videos by filename
                 section.videos.sort((a, b) => a.path.localeCompare(b.path));
                 sections.push(section);
             }
         }
 
-        // Sort sections by name
         sections.sort((a, b) => a.title.localeCompare(b.title));
 
-        // Create navigation elements
         sections.forEach(section => {
             const sectionElement = createSectionElement(section);
             courseNavigation.appendChild(sectionElement);
@@ -657,7 +621,6 @@ async function buildCourseNavigation() {
     }
 }
 
-// Create section element with progress bar
 function createSectionElement(section) {
     const sectionDiv = document.createElement('div');
     sectionDiv.className = 'course-section';
@@ -683,7 +646,6 @@ function createSectionElement(section) {
     return sectionDiv;
 }
 
-// Create video element
 function createVideoElement(video) {
     const videoDiv = document.createElement('div');
     videoDiv.className = 'video-item';
@@ -695,27 +657,21 @@ function createVideoElement(video) {
 
     videoDiv.addEventListener('click', () => loadVideo(video));
 
-    // Update video status
     updateVideoStatus(videoDiv, video.path);
 
     return videoDiv;
 }
 
-// Load video
 async function loadVideo(video) {
     try {
-        // If we're navigating and only have path/title, find the actual video handle
         if (!video.handle && video.path) {
             const sections = Array.from(document.querySelectorAll('.course-section'));
             for (const section of sections) {
                 const videos = Array.from(section.querySelectorAll('.video-item'));
                 const foundVideo = videos.find(v => v.getAttribute('data-path') === video.path);
                 if (foundVideo) {
-                    // Get the section name from the path
                     const sectionName = video.path.split('/')[0];
-                    // Get the section handle
                     const sectionHandle = await courseState.folderHandle.getDirectoryHandle(sectionName);
-                    // Get the video handle
                     const videoFileName = video.path.split('/')[1];
                     video.handle = await sectionHandle.getFileHandle(videoFileName);
                     break;
@@ -730,7 +686,6 @@ async function loadVideo(video) {
         const file = await video.handle.getFile();
         const url = URL.createObjectURL(file);
 
-        // Clean up previous video URL if exists
         if (videoPlayer.src) {
             URL.revokeObjectURL(videoPlayer.src);
         }
@@ -739,12 +694,10 @@ async function loadVideo(video) {
         videoPlayer.src = url;
         videoTitle.textContent = video.title;
 
-        // Load saved progress
         if (courseState.progress[video.path]) {
             videoPlayer.currentTime = courseState.progress[video.path].time;
         }
 
-        // Update current section heading
         updateCurrentSectionHeading();
 
         videoPlayer.playbackRate = courseState.settings.playbackSpeed || lastPlaybackSpeed || 1;
@@ -755,7 +708,6 @@ async function loadVideo(video) {
     }
 }
 
-// Update video progress and mark as watched at 90%
 function updateProgress() {
     if (!courseState.currentVideo) return;
     const progress = {
@@ -764,7 +716,6 @@ function updateProgress() {
         percentage: (videoPlayer.currentTime / videoPlayer.duration) * 100
     };
     courseState.progress[courseState.currentVideo.path] = progress;
-    // Mark as completed if 90% watched
     if (progress.percentage >= 90 && !courseState.progress[courseState.currentVideo.path].completed) {
         courseState.progress[courseState.currentVideo.path].completed = true;
         saveState();
@@ -783,7 +734,6 @@ function handleVideoEnd() {
     showAutoPlayOverlay();
 }
 
-// Update video status in navigation
 function updateVideoStatus(videoElement, path) {
     const progress = courseState.progress[path];
     const statusElement = videoElement.querySelector('.video-status');
@@ -797,7 +747,6 @@ function updateVideoStatus(videoElement, path) {
     }
 }
 
-// Video controls
 function togglePlayPause() {
     if (videoPlayer.paused) {
         videoPlayer.play();
@@ -826,11 +775,45 @@ function handleVolumeChange(e) {
     saveState();
 }
 
-function handlePlaybackSpeedChange(e) {
-    const speed = parseFloat(e.target.value);
+function toggleSpeedMenu() {
+    if (speedMenu) {
+        speedMenu.classList.toggle('show');
+        updateSpeedMenuSelection();
+    }
+}
+
+function updateSpeedMenuSelection() {
+    const currentSpeed = videoPlayer.playbackRate;
+    const speedOptions = document.querySelectorAll('.speed-option');
+
+    speedOptions.forEach(option => {
+        option.classList.remove('active');
+        if (parseFloat(option.dataset.speed) === currentSpeed) {
+            option.classList.add('active');
+        }
+    });
+
+    const speedText = document.querySelector('.speed-text');
+    if (speedText) {
+        speedText.textContent = `${currentSpeed}x`;
+    }
+}
+
+function setPlaybackSpeed(speed) {
     videoPlayer.playbackRate = speed;
     courseState.settings.playbackSpeed = speed;
+    lastPlaybackSpeed = speed;
     saveState();
+    updateSpeedMenuSelection();
+
+    if (speedMenu) {
+        speedMenu.classList.remove('show');
+    }
+}
+
+function handlePlaybackSpeedChange(e) {
+    const speed = parseFloat(e.target.value);
+    setPlaybackSpeed(speed);
 }
 
 function toggleFullscreen() {
@@ -841,14 +824,12 @@ function toggleFullscreen() {
     }
 }
 
-// Theme toggle
 function toggleTheme() {
     console.log('Toggling theme...');
     document.body.classList.toggle('dark-mode');
     courseState.settings.theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
     saveState();
 
-    // Update theme toggle icon
     if (themeToggle) {
         themeToggle.innerHTML = document.body.classList.contains('dark-mode')
             ? '<i class="fas fa-sun"></i>'
@@ -856,7 +837,6 @@ function toggleTheme() {
     }
 }
 
-// Keyboard shortcuts
 function handleKeyboardShortcuts(e) {
     switch (e.code) {
         case 'Space':
@@ -877,10 +857,24 @@ function handleKeyboardShortcuts(e) {
             volumeSlider.value = Math.max(0, parseFloat(volumeSlider.value) - 0.1);
             handleVolumeChange({ target: volumeSlider });
             break;
+        case 'Period':
+            const newSpeedUp = Math.min(4, videoPlayer.playbackRate + 0.25);
+            setPlaybackSpeed(newSpeedUp);
+            break;
+        case 'Comma':
+            const newSpeedDown = Math.max(0.25, videoPlayer.playbackRate - 0.25);
+            setPlaybackSpeed(newSpeedDown);
+            break;
+        case 'KeyR':
+            setPlaybackSpeed(1);
+            break;
+        case 'KeyF':
+            e.preventDefault();
+            toggleFullscreen();
+            break;
     }
 }
 
-// Utility functions
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     seconds = Math.floor(seconds % 60);
@@ -888,11 +882,12 @@ function formatTime(seconds) {
 }
 
 function applySettings() {
-    // Apply saved settings
     videoPlayer.playbackRate = courseState.settings.playbackSpeed;
     videoPlayer.volume = courseState.settings.volume;
-    playbackSpeedSelect.value = courseState.settings.playbackSpeed;
     volumeSlider.value = courseState.settings.volume;
+
+
+    updateSpeedMenuSelection();
 
     if (courseState.settings.theme === 'dark') {
         document.body.classList.add('dark-mode');
@@ -901,18 +896,14 @@ function applySettings() {
     }
 }
 
-// Update video info when metadata is loaded
 function updateVideoInfo() {
     if (!courseState.currentVideo) return;
-    // Load saved progress
     if (courseState.progress[courseState.currentVideo.path]) {
         videoPlayer.currentTime = courseState.progress[courseState.currentVideo.path].time;
     }
-    // Set playback speed
     videoPlayer.playbackRate = courseState.settings.playbackSpeed || lastPlaybackSpeed || 1;
 }
 
-// Get current video index and section
 function getCurrentVideoIndexAndSection() {
     if (!courseState.currentVideo) {
         return { currentSectionIdx: -1, currentVideoIdx: -1, sectionVideos: [], navSections: [] };
@@ -939,12 +930,10 @@ function getCurrentVideoIndexAndSection() {
     return { currentSectionIdx, currentVideoIdx, sectionVideos, navSections };
 }
 
-// Play previous video
 function playPrevVideo() {
     const { currentSectionIdx, currentVideoIdx, sectionVideos, navSections } = getCurrentVideoIndexAndSection();
 
     if (currentVideoIdx > 0) {
-        // Play previous video in current section
         const prevVideo = sectionVideos[currentVideoIdx - 1];
         if (prevVideo) {
             const videoPath = prevVideo.getAttribute('data-path');
@@ -952,7 +941,6 @@ function playPrevVideo() {
             loadVideo({ path: videoPath, title: videoTitle });
         }
     } else if (currentSectionIdx > 0) {
-        // Play last video of previous section
         const prevSectionVideos = Array.from(navSections[currentSectionIdx - 1].querySelectorAll('.video-item'));
         if (prevSectionVideos.length > 0) {
             const lastVideo = prevSectionVideos[prevSectionVideos.length - 1];
@@ -963,12 +951,10 @@ function playPrevVideo() {
     }
 }
 
-// Play next video
 function playNextVideo() {
     const { currentSectionIdx, currentVideoIdx, sectionVideos, navSections } = getCurrentVideoIndexAndSection();
 
     if (currentVideoIdx < sectionVideos.length - 1) {
-        // Play next video in current section
         const nextVideo = sectionVideos[currentVideoIdx + 1];
         if (nextVideo) {
             const videoPath = nextVideo.getAttribute('data-path');
@@ -976,7 +962,6 @@ function playNextVideo() {
             loadVideo({ path: videoPath, title: videoTitle });
         }
     } else if (currentSectionIdx < navSections.length - 1) {
-        // Play first video of next section
         const nextSectionVideos = Array.from(navSections[currentSectionIdx + 1].querySelectorAll('.video-item'));
         if (nextSectionVideos.length > 0) {
             const firstVideo = nextSectionVideos[0];
@@ -987,7 +972,6 @@ function playNextVideo() {
     }
 }
 
-// Show auto play overlay
 function showAutoPlayOverlay() {
     removeAutoPlayOverlay();
     autoPlayOverlay = document.createElement('div');
@@ -1001,7 +985,6 @@ function showAutoPlayOverlay() {
             <button id="auto-play-now" class="btn" style="background:#2563eb;">Play Now</button>
         </div>
     `;
-    // Append to video's parent for perfect centering
     if (videoPlayer && videoPlayer.parentNode) {
         videoPlayer.parentNode.appendChild(autoPlayOverlay);
     } else {
@@ -1036,7 +1019,6 @@ function removeAutoPlayOverlay() {
     }
 }
 
-// Update all progress bars (section and global)
 function updateAllProgressBars() {
     const sectionDivs = document.querySelectorAll('.course-section');
     let totalVideos = 0, totalWatched = 0;
@@ -1053,13 +1035,11 @@ function updateAllProgressBars() {
         totalVideos += videoItems.length;
         totalWatched += watched;
     });
-    // Global progress
     const globalPercent = totalVideos ? (totalWatched / totalVideos) * 100 : 0;
     if (globalProgressFill) globalProgressFill.style.width = globalPercent + '%';
     if (globalProgressText) globalProgressText.textContent = `${Math.round(globalPercent)}% Complete`;
 }
 
-// Update current section heading when loading a video
 function updateCurrentSectionHeading() {
     const navSections = document.querySelectorAll('.course-section');
     let found = false;
@@ -1088,7 +1068,6 @@ function updateCurrentSectionHeading() {
     }
 }
 
-// Toggle Mini Player
 function toggleMiniPlayer() {
     const miniPlayer = document.getElementById('mini-player');
     if (!miniPlayer) {
@@ -1100,18 +1079,15 @@ function toggleMiniPlayer() {
     saveState();
 }
 
-// Create Mini Player
 function createMiniPlayer() {
     const miniPlayer = document.createElement('div');
     miniPlayer.id = 'mini-player';
     miniPlayer.className = 'mini-player';
 
-    // Clone video player
     const videoClone = videoPlayer.cloneNode(true);
     videoClone.controls = true;
     videoClone.className = 'mini-video';
 
-    // Add controls
     const controls = document.createElement('div');
     controls.className = 'mini-controls';
     controls.innerHTML = `
@@ -1123,7 +1099,6 @@ function createMiniPlayer() {
     miniPlayer.appendChild(controls);
     document.body.appendChild(miniPlayer);
 
-    // Setup controls
     controls.querySelector('.mini-close').onclick = () => {
         miniPlayer.remove();
         courseState.settings.miniPlayerEnabled = false;
@@ -1134,14 +1109,12 @@ function createMiniPlayer() {
         miniPlayer.classList.toggle('expanded');
     };
 
-    // Make mini player draggable
     makeDraggable(miniPlayer, controls);
 
     courseState.settings.miniPlayerEnabled = true;
     saveState();
 }
 
-// Make element draggable
 function makeDraggable(element, handle) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     handle.onmousedown = dragMouseDown;
@@ -1170,145 +1143,42 @@ function makeDraggable(element, handle) {
     }
 }
 
-// Update watch statistics
-function updateWatchStats() {
-    if (!courseState.currentVideo) return;
+function updateSeekbarProgress() {
+    if (!videoPlayer || !videoPlayer.duration || !seekbarProgress) return;
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const section = courseState.currentVideo.path.split('/')[0];
+    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+    seekbarProgress.style.width = `${progress}%`;
+}
 
-    // Update total watch time
-    courseState.watchStats.totalWatchTime += 1; // Add 1 second
+function updateBufferDisplay() {
+    if (!videoPlayer || !videoPlayer.duration || !seekbarBuffer) return;
 
-    // Update daily watch time
-    if (!courseState.watchStats.dailyWatchTime[today]) {
-        courseState.watchStats.dailyWatchTime[today] = 0;
-    }
-    courseState.watchStats.dailyWatchTime[today] += 1;
-
-    // Update section watch time
-    if (!courseState.watchStats.sectionWatchTime[section]) {
-        courseState.watchStats.sectionWatchTime[section] = 0;
-    }
-    courseState.watchStats.sectionWatchTime[section] += 1;
-
-    // Save stats every 30 seconds
-    if (courseState.watchStats.totalWatchTime % 30 === 0) {
-        saveState();
+    if (videoPlayer.buffered.length > 0) {
+        const buffered = videoPlayer.buffered.end(videoPlayer.buffered.length - 1);
+        const progress = (buffered / videoPlayer.duration) * 100;
+        seekbarBuffer.style.width = `${progress}%`;
     }
 }
 
-// Format time duration
-function formatDuration(seconds) {
+function updateTimeDisplay() {
+    if (!videoPlayer || !timeDisplay) return;
+
+    const current = formatTime(videoPlayer.currentTime || 0);
+    const total = formatTime(videoPlayer.duration || 0);
+    timeDisplay.textContent = `${current} / ${total}`;
+}
+
+function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '0:00';
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
+    const secs = Math.floor(seconds % 60);
 
     if (hours > 0) {
-        return `${hours}h ${minutes}m ${remainingSeconds}s`;
-    } else if (minutes > 0) {
-        return `${minutes}m ${remainingSeconds}s`;
-    } else {
-        return `${remainingSeconds}s`;
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Display watch statistics
-function displayWatchStats() {
-    const statsContainer = document.createElement('div');
-    statsContainer.className = 'watch-stats';
-
-    // Calculate section progress
-    const sectionProgress = {};
-    const navSections = document.querySelectorAll('.course-section');
-    navSections.forEach(section => {
-        const sectionName = section.querySelector('h3').textContent;
-        const videos = section.querySelectorAll('.video-item');
-        let completed = 0;
-        videos.forEach(video => {
-            const path = video.getAttribute('data-path');
-            if (courseState.progress[path]?.completed) {
-                completed++;
-            }
-        });
-        sectionProgress[sectionName] = {
-            total: videos.length,
-            completed: completed,
-            percentage: videos.length ? Math.round((completed / videos.length) * 100) : 0
-        };
-    });
-
-    // Calculate total progress
-    let totalVideos = 0;
-    let totalCompleted = 0;
-    Object.values(sectionProgress).forEach(section => {
-        totalVideos += section.total;
-        totalCompleted += section.completed;
-    });
-    const totalPercentage = totalVideos ? Math.round((totalCompleted / totalVideos) * 100) : 0;
-
-    statsContainer.innerHTML = `
-        <h3>Progress Statistics</h3>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">${totalPercentage}%</div>
-                <div class="stat-label">Overall Progress</div>
-                <div class="stat-detail">${totalCompleted} of ${totalVideos} videos completed</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${formatDuration(courseState.watchStats.totalWatchTime)}</div>
-                <div class="stat-label">Total Watch Time</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">${formatDuration(getTodayWatchTime())}</div>
-                <div class="stat-label">Today's Watch Time</div>
-            </div>
-        </div>
-        <div class="section-stats">
-            <h4>Section Progress</h4>
-            ${Object.entries(sectionProgress).map(([section, stats]) => `
-                <div class="section-stat">
-                    <div class="section-name">${section}</div>
-                    <div class="section-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${stats.percentage}%"></div>
-                        </div>
-                        <div class="section-percentage">${stats.percentage}%</div>
-                    </div>
-                    <div class="section-detail">${stats.completed} of ${stats.total} videos completed</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-    // Insert after the video player
-    const videoContainer = document.querySelector('.video-container');
-    if (videoContainer) {
-        videoContainer.parentNode.insertBefore(statsContainer, videoContainer.nextSibling);
-    }
-}
-
-// Get today's watch time
-function getTodayWatchTime() {
-    const today = new Date().toISOString().split('T')[0];
-    return courseState.watchStats.dailyWatchTime[today] || 0;
-}
-
-// Get most watched section
-function getMostWatchedSection() {
-    let maxTime = 0;
-    let maxSection = '';
-
-    for (const [section, time] of Object.entries(courseState.watchStats.sectionWatchTime)) {
-        if (time > maxTime) {
-            maxTime = time;
-            maxSection = section;
-        }
-    }
-
-    return maxSection || 'None';
-}
-
-// Initialize the application when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', init); 
