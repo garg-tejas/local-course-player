@@ -293,13 +293,6 @@ body {
     transform: scale(1.1);
 }
 
-.course-progress,
-.progress-bar,
-.progress-fill,
-.progress-text {
-    display: none !important;
-}
-
 .course-navigation {
     display: flex;
     flex-direction: column;
@@ -480,6 +473,10 @@ body {
     margin-right: 1rem;
     font-weight: 500;
     line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
 }
 
 .video-status {
@@ -1220,57 +1217,6 @@ body {
     font-size: 1rem;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: var(--border-color);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 12px 0 8px 0;
-    position: relative;
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--progress-gradient);
-    border-radius: 4px;
-    width: 0%;
-    transition: width 0.3s ease;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-    animation: pulse 2s infinite;
-}
-
-.section-progress-bar {
-    width: 100%;
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-
-.video-nav-controls {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin: 1.5rem 0 0 0;
-}
-
-.video-nav-controls .btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    padding: 0.5rem 1.2rem;
-    background-color: var(--primary-color);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.video-nav-controls .btn:hover {
-    background-color: #1746a2;
-}
-
 .auto-play-overlay {
     position: absolute !important;
     left: 50%;
@@ -1516,24 +1462,6 @@ body {
 
 .video-info {
     animation: fadeInUp 0.5s ease forwards;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
-    }
-
-    70% {
-        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-    }
-}
-
-.progress-fill:not([style*="width: 0"]) {
-    animation: pulse 2s infinite;
 }
 
 /* Hover effects for interactive elements */

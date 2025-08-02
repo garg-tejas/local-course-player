@@ -29,11 +29,7 @@ let fullscreenBtn;
 let themeToggle;
 let selectFolderBtn;
 let courseNavigation;
-let progressFill;
-let progressText;
 let videoTitle;
-let globalProgressFill;
-let globalProgressText;
 let coursePathText;
 let clearCourseBtn;
 let resetDbBtn;
@@ -61,11 +57,7 @@ function initializeDOMElements() {
     themeToggle = document.getElementById('theme-toggle');
     selectFolderBtn = document.getElementById('select-folder');
     courseNavigation = document.querySelector('.course-navigation');
-    progressFill = document.querySelector('.progress-fill');
-    progressText = document.querySelector('.progress-text');
     videoTitle = document.getElementById('video-title');
-    globalProgressFill = document.getElementById('global-progress-fill');
-    globalProgressText = document.getElementById('global-progress-text');
     coursePathText = document.getElementById('course-path-text');
     clearCourseBtn = document.getElementById('clear-course');
     resetDbBtn = document.getElementById('reset-db');
@@ -74,17 +66,6 @@ function initializeDOMElements() {
     seekbarProgress = document.getElementById('seekbar-progress');
     seekbarBuffer = document.getElementById('seekbar-buffer');
     timeDisplay = document.getElementById('time-display');
-
-    const prevBtn = document.getElementById('prev-video');
-    const nextBtn = document.getElementById('next-video');
-
-    if (prevBtn) {
-        prevBtn.onclick = playPrevVideo;
-    }
-
-    if (nextBtn) {
-        nextBtn.onclick = playNextVideo;
-    }
 
     const elements = {
         videoPlayer,
@@ -99,16 +80,10 @@ function initializeDOMElements() {
         themeToggle,
         selectFolderBtn,
         courseNavigation,
-        progressFill,
-        progressText,
         videoTitle,
-        globalProgressFill,
-        globalProgressText,
         coursePathText,
         clearCourseBtn,
-        resetDbBtn,
-        prevBtn,
-        nextBtn
+        resetDbBtn
     };
 
     for (const [name, element] of Object.entries(elements)) {
@@ -614,7 +589,6 @@ async function buildCourseNavigation() {
             const sectionElement = createSectionElement(section);
             courseNavigation.appendChild(sectionElement);
         });
-        updateAllProgressBars();
     } catch (error) {
         console.error('Error building course navigation:', error);
         alert('Error loading course structure. Please try again.');
@@ -651,7 +625,7 @@ function createVideoElement(video) {
     videoDiv.className = 'video-item';
     videoDiv.setAttribute('data-path', video.path);
     videoDiv.innerHTML = `
-        <span class="video-title">${video.title}</span>
+        <span class="video-title" title="${video.title}">${video.title}</span>
         <span class="video-status"></span>
     `;
 
@@ -720,7 +694,6 @@ function updateProgress() {
         courseState.progress[courseState.currentVideo.path].completed = true;
         saveState();
         updateVideoStatus(document.querySelector(`[data-path="${courseState.currentVideo.path}"]`), courseState.currentVideo.path);
-        updateAllProgressBars();
     }
     saveState();
 }
@@ -730,7 +703,6 @@ function handleVideoEnd() {
     courseState.progress[courseState.currentVideo.path].completed = true;
     saveState();
     updateVideoStatus(document.querySelector(`[data-path="${courseState.currentVideo.path}"]`), courseState.currentVideo.path);
-    updateAllProgressBars();
     showAutoPlayOverlay();
 }
 
@@ -1017,27 +989,6 @@ function removeAutoPlayOverlay() {
         autoPlayOverlay.remove();
         autoPlayOverlay = null;
     }
-}
-
-function updateAllProgressBars() {
-    const sectionDivs = document.querySelectorAll('.course-section');
-    let totalVideos = 0, totalWatched = 0;
-    sectionDivs.forEach(sectionDiv => {
-        const videoItems = sectionDiv.querySelectorAll('.video-item');
-        let watched = 0;
-        videoItems.forEach(item => {
-            const path = item.getAttribute('data-path');
-            if (courseState.progress[path]?.completed) watched++;
-        });
-        const sectionProgressBar = sectionDiv.querySelector('.progress-fill');
-        const percent = videoItems.length ? (watched / videoItems.length) * 100 : 0;
-        if (sectionProgressBar) sectionProgressBar.style.width = percent + '%';
-        totalVideos += videoItems.length;
-        totalWatched += watched;
-    });
-    const globalPercent = totalVideos ? (totalWatched / totalVideos) * 100 : 0;
-    if (globalProgressFill) globalProgressFill.style.width = globalPercent + '%';
-    if (globalProgressText) globalProgressText.textContent = `${Math.round(globalPercent)}% Complete`;
 }
 
 function updateCurrentSectionHeading() {
