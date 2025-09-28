@@ -1,4 +1,4 @@
-# Local Course Player
+# Local Course Player 🎥
 
 A simple, privacy-focused course player that runs entirely in your browser. Load your local course folders containing videos and PDFs and start learning.
 
@@ -7,7 +7,6 @@ A simple, privacy-focused course player that runs entirely in your browser. Load
 - **Entirely Local**: Your course files never leave your computer. Everything is processed in-browser.
 - **Video & PDF Support**: Seamlessly switch between video lessons and PDF documents.
 - **Progress Tracking**: Automatically saves your completed lessons for each course.
-- **Custom Playback Speed**: Watch videos at your own pace. Your speed setting is saved.
 - **Distraction-Free UI**: A clean interface with a collapsible sidebar to help you focus.
 - **Keyboard Shortcuts**: Navigate and control video playback efficiently.
 

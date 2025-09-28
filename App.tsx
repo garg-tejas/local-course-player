@@ -11,7 +11,6 @@ const App: React.FC = () => {
   const [course, setCourse] = useState<Course | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
-  const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const allLessons = useMemo(() => {
@@ -23,7 +22,7 @@ const App: React.FC = () => {
     if (!selectedLesson || allLessons.length === 0) return -1;
     return allLessons.findIndex(l => l.path === selectedLesson.path);
   }, [selectedLesson, allLessons]);
-  
+
   const isLastLesson = currentLessonIndex >= 0 && currentLessonIndex === allLessons.length - 1;
 
   useEffect(() => {
@@ -52,28 +51,9 @@ const App: React.FC = () => {
     }
   }, [completedLessons, course]);
 
-  useEffect(() => {
-    try {
-      const storedRate = localStorage.getItem('video_playback_rate');
-      if (storedRate) {
-        setPlaybackRate(parseFloat(storedRate));
-      }
-    } catch (e) {
-      console.error("Failed to load playback rate from localStorage", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('video_playback_rate', String(playbackRate));
-    } catch (e) {
-      console.error("Failed to save playback rate to localStorage", e);
-    }
-  }, [playbackRate]);
-
   const handleCourseLoad = useCallback((loadedCourse: Course) => {
     setCourse(loadedCourse);
-    setSelectedLesson(null); 
+    setSelectedLesson(null);
   }, []);
 
   const handleSelectLesson = useCallback((lesson: Lesson) => {
@@ -104,8 +84,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
-      <Sidebar 
-        course={course} 
+      <Sidebar
+        course={course}
         selectedLesson={selectedLesson}
         onSelectLesson={handleSelectLesson}
         completedLessons={completedLessons}
@@ -113,24 +93,22 @@ const App: React.FC = () => {
       />
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-gray-800 border-b border-gray-700 p-4 flex items-center shadow-md flex-shrink-0">
-            <button 
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-              className="p-1 mr-3 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-secondary"
-              aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-            >
-              {isSidebarCollapsed ? <PanelLeftOpenIcon className="h-6 w-6 text-gray-300" /> : <PanelLeftCloseIcon className="h-6 w-6 text-gray-300" />}
-            </button>
-            <LogoIcon className="h-8 w-8 text-brand-secondary" />
-            <h1 className="text-xl font-bold ml-3 truncate">{course.name}</h1>
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-1 mr-3 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+            aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          >
+            {isSidebarCollapsed ? <PanelLeftOpenIcon className="h-6 w-6 text-gray-300" /> : <PanelLeftCloseIcon className="h-6 w-6 text-gray-300" />}
+          </button>
+          <LogoIcon className="h-8 w-8 text-brand-secondary" />
+          <h1 className="text-xl font-bold ml-3 truncate">{course.name}</h1>
         </header>
-        <ContentView 
+        <ContentView
           lesson={selectedLesson}
           completedLessons={completedLessons}
           onToggleComplete={handleToggleComplete}
           onSelectNext={handleSelectNextLesson}
           isLastLesson={isLastLesson}
-          playbackRate={playbackRate}
-          onPlaybackRateChange={setPlaybackRate}
         />
       </main>
     </div>

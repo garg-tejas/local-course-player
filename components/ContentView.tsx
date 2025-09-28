@@ -12,11 +12,9 @@ interface ContentViewProps {
   onToggleComplete: (lessonPath: string) => void;
   onSelectNext: () => void;
   isLastLesson: boolean;
-  playbackRate: number;
-  onPlaybackRateChange: (rate: number) => void;
 }
 
-const ContentView: React.FC<ContentViewProps> = ({ lesson, completedLessons, onToggleComplete, onSelectNext, isLastLesson, playbackRate, onPlaybackRateChange }) => {
+const ContentView: React.FC<ContentViewProps> = ({ lesson, completedLessons, onToggleComplete, onSelectNext, isLastLesson }) => {
   if (!lesson) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-900 text-center">
@@ -31,35 +29,34 @@ const ContentView: React.FC<ContentViewProps> = ({ lesson, completedLessons, onT
 
   return (
     <div className="flex-1 flex flex-col bg-gray-900 overflow-hidden">
-        <div className="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
-            <h3 className="text-xl font-semibold text-white truncate" title={lesson.name}>{lesson.name}</h3>
-            <div className="flex items-center space-x-4">
-                <button
-                    onClick={() => onToggleComplete(lesson.path)}
-                    className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors flex items-center ${
-                        isCompleted
-                            ? 'bg-gray-600 hover:bg-gray-500 text-white'
-                            : 'bg-brand-secondary hover:bg-blue-500 text-white'
-                    }`}
-                >
-                    <CheckCircleIcon className="h-5 w-5 mr-2" />
-                    {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
-                </button>
-                {!isLastLesson && (
-                    <button
-                        onClick={onSelectNext}
-                        className="px-4 py-2 rounded-md text-sm font-semibold bg-gray-600 hover:bg-gray-500 text-white transition-colors flex items-center"
-                    >
-                        <span>Next Lesson</span>
-                        <ArrowRightIcon className="h-5 w-5 ml-2" />
-                    </button>
-                )}
-            </div>
+      <div className="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
+        <h3 className="text-xl font-semibold text-white truncate" title={lesson.name}>{lesson.name}</h3>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => onToggleComplete(lesson.path)}
+            className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors flex items-center ${isCompleted
+                ? 'bg-gray-600 hover:bg-gray-500 text-white'
+                : 'bg-brand-secondary hover:bg-blue-500 text-white'
+              }`}
+          >
+            <CheckCircleIcon className="h-5 w-5 mr-2" />
+            {isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'}
+          </button>
+          {!isLastLesson && (
+            <button
+              onClick={onSelectNext}
+              className="px-4 py-2 rounded-md text-sm font-semibold bg-gray-600 hover:bg-gray-500 text-white transition-colors flex items-center"
+            >
+              <span>Next Lesson</span>
+              <ArrowRightIcon className="h-5 w-5 ml-2" />
+            </button>
+          )}
         </div>
-        <div className="flex-1 relative">
-            {lesson.type === 'video' && <VideoPlayer file={lesson.file} onEnded={() => { if (!isCompleted) onToggleComplete(lesson.path) }} playbackRate={playbackRate} onPlaybackRateChange={onPlaybackRateChange} />}
-            {lesson.type === 'pdf' && <PdfViewer file={lesson.file} />}
-        </div>
+      </div>
+      <div className="flex-1 relative">
+        {lesson.type === 'video' && <VideoPlayer file={lesson.file} onEnded={() => { if (!isCompleted) onToggleComplete(lesson.path) }} />}
+        {lesson.type === 'pdf' && <PdfViewer file={lesson.file} />}
+      </div>
     </div>
   );
 };
