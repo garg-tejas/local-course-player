@@ -4,141 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Local Course Player</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "brand-primary": "#1e40af", // A deep blue
+              "brand-secondary": "#3b82f6", // A lighter blue
+              "gray-900": "#111827",
+              "gray-800": "#1f2937",
+              "gray-700": "#374151",
+              "gray-300": "#d1d5db",
+              "gray-100": "#f3f4f6",
+            },
+          },
+        },
+      };
+    </script>
+    <script type="importmap">
+      {
+        "imports": {
+          "react/": "https://aistudiocdn.com/react@^19.1.1/",
+          "react": "https://aistudiocdn.com/react@^19.1.1",
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/index.css" />
   </head>
-  <body class="dark-mode">
-    <div class="app-container">
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <h1>Course Player</h1>
-          <div class="header-controls">
-            <button id="select-folder" class="btn" type="button">
-              <i class="fas fa-folder-open"></i> Select Course
-            </button>
-          </div>
-        </div>
-        <nav class="course-navigation"></nav>
-      </aside>
-      <main class="main-content">
-        <div class="main-header">
-          <div class="title-section">
-            <h2 id="current-section-heading">Course Navigation</h2>
-            <h3 id="video-title">Select a video to start</h3>
-          </div>
-          <button id="theme-toggle" class="theme-toggle" type="button">
-            <i class="fas fa-moon"></i>
-          </button>
-        </div>
-
-        <div id="welcome-message" class="welcome-container">
-          <h2>Welcome to the Local Course Player!</h2>
-          <p>
-            This tool lets you watch video courses that are stored on your own
-            computer. Your files are <strong>never</strong> uploaded to any
-            server.
-          </p>
-          <p>
-            To begin, click the <strong>"Select Course"</strong> button in the
-            sidebar and choose the root folder of your course.
-          </p>
-          <p class="compatibility-note">
-            <i class="fas fa-exclamation-triangle"></i>
-            This player requires a modern browser like
-            <strong>Google Chrome</strong> or
-            <strong>Microsoft Edge</strong> that supports the File System Access
-            API.
-          </p>
-        </div>
-
-        <div class="video-container">
-          <video id="video-player">
-            Your browser does not support the video tag.
-          </video>
-          <div class="video-controls">
-            <div class="video-seekbar" id="video-seekbar">
-              <div class="seekbar-buffer" id="seekbar-buffer"></div>
-              <div class="seekbar-progress" id="seekbar-progress"></div>
-            </div>
-            <div class="controls-row">
-              <div class="controls-left">
-                <button id="skip-backward" class="control-btn">
-                  <i class="fas fa-backward"></i>
-                </button>
-                <button id="play-pause" class="control-btn">
-                  <i class="fas fa-play"></i>
-                </button>
-                <button id="skip-forward" class="control-btn">
-                  <i class="fas fa-forward"></i>
-                </button>
-                <div class="volume-control">
-                  <button id="volume-btn" class="control-btn">
-                    <i class="fas fa-volume-up"></i>
-                  </button>
-                  <input
-                    type="range"
-                    id="volume-slider"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value="1"
-                  />
-                </div>
-                <div class="time-display" id="time-display">0:00 / 0:00</div>
-              </div>
-              <div class="controls-right">
-                <div class="playback-speed-control">
-                  <button id="speed-btn" class="control-btn speed-toggle">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span class="speed-text">1x</span>
-                  </button>
-                  <div class="speed-menu" id="speed-menu">
-                    <button class="speed-option" data-speed="1">1x</button>
-                    <button class="speed-option" data-speed="1.25">
-                      1.25x
-                    </button>
-                    <button class="speed-option" data-speed="1.5">1.5x</button>
-                    <button class="speed-option" data-speed="1.75">
-                      1.75x
-                    </button>
-                    <button class="speed-option" data-speed="2">2x</button>
-                    <div class="custom-speed">
-                      <input
-                        type="number"
-                        id="custom-speed"
-                        min="0.5"
-                        max="5"
-                        step="0.05"
-                        placeholder="Custom"
-                      />
-                      <button id="apply-custom-speed">Apply</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="video-nav-controls">
-          <button id="prev-video" class="btn" type="button">
-            <i class="fas fa-step-backward"></i> Prev
-          </button>
-          <button id="next-video" class="btn" type="button">
-            Next <i class="fas fa-step-forward"></i>
-          </button>
-        </div>
-      </main>
-    </div>
-
-    <script src="app.js"></script>
+  <body class="bg-gray-900 text-gray-100">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

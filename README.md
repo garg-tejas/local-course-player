@@ -1,32 +1,30 @@
-# Local Course Player 🎥
+# Local Course Player
 
-A simple, privacy-focused video course player that runs entirely in your browser. Watch your local video courses with progress tracking.
+A simple, privacy-focused course player that runs entirely in your browser. Load your local course folders containing videos and PDFs and start learning.
 
 ## Features
 
-- **Local-only**: Your videos never leave your computer
-- **Progress tracking**: Automatically saves where you left off
-- **Custom playback speeds**: From 0.25x to 4x with keyboard shortcuts
-- **Course organization**: Automatically organizes videos by folders
-- **Dark/Light themes**: Choose your preferred viewing experience
-- **Keyboard shortcuts**: Efficient navigation without mouse
+- **Entirely Local**: Your course files never leave your computer. Everything is processed in-browser.
+- **Video & PDF Support**: Seamlessly switch between video lessons and PDF documents.
+- **Progress Tracking**: Automatically saves your completed lessons for each course.
+- **Custom Playback Speed**: Watch videos at your own pace. Your speed setting is saved.
+- **Distraction-Free UI**: A clean interface with a collapsible sidebar to help you focus.
+- **Keyboard Shortcuts**: Navigate and control video playback efficiently.
 
-## Keyboard Shortcuts
+## How It Works
 
-| Key     | Action          |
-| ------- | --------------- |
-| `Space` | Play/Pause      |
-| `←/→`   | Skip 10 seconds |
-| `↑/↓`   | Volume          |
-| `,/.`   | Speed down/up   |
-| `R`     | Reset speed     |
+1.  Click **"Select Course Folder"**.
+2.  Choose the root folder of your course.
+3.  The player will automatically organize your lessons based on the sub-folders inside.
+
+## Keyboard Shortcuts (Video Player)
+
+| Key       | Action                     |
+| --------- | -------------------------- |
+| `Space`   | Play / Pause               |
+| `←` / `→` | Skip backward / forward 5s |
+| `F`       | Toggle Fullscreen          |
 
 ## Why This Exists
 
-I built this because I wanted to watch my local video courses without:
-
-- Uploading them to cloud services
-- Losing my progress when switching devices
-- Dealing with slow, feature-heavy video players
-
-It's just a simple tool that does what it needs to do.
+I built this because I wanted a simple way to watch my local courses without uploading them, losing my progress, or dealing with bloated software. It's a straightforward tool that respects your privacy and gets the job done.

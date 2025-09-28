@@ -1,0 +1,5 @@
+{
+  "name": "Local Course Player",
+  "description": "A web application to play and organize your local video and PDF courses. Select your course folder and start learning.",
+  "requestFramePermissions": []
+}
